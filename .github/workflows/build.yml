@@ -24,15 +24,17 @@ jobs:
           echo "$THEOS/bin" >> "$GITHUB_PATH"
 
       - name: Build package
+        shell: bash
         run: |
-          set -e
-          make THEOS_PACKAGE_SCHEME=rootless package FINALPACKAGE=1 DEBUG=0 2>&1 | tail -60
-          ls -lh packages/ || true
+          set -eo pipefail
+          make THEOS_PACKAGE_SCHEME=rootless package FINALPACKAGE=1 DEBUG=0
+          echo "=== deb 文件 ==="
+          find . -name '*.deb' -exec ls -lh {} \;
 
       - name: Upload deb
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ykcaster-deb
-          path: packages/*.deb
+          path: "**/*.deb"
           if-no-files-found: warn

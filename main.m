@@ -6,6 +6,9 @@
 
 static NSString *const kHost = @"192.168.1.42";   // PC 地址
 static const int kVideoPort = 10000;
+static const int kControlPort = 10001;
+
+static WsClient *gCtrl = nil;   // 控制/日志通道
 
 @interface RootVC : UIViewController <CaptureDelegate, EncoderDelegate>
 @property (nonatomic, strong) Capture *capture;
@@ -54,6 +57,16 @@ static const int kVideoPort = 10000;
 
     [_ws connect];
     [_ws sendText:@"{\"cmd\":\"hello\",\"role\":\"device\",\"codec\":\"h264\"}"];
+
+    // 控制通道：把设备日志实时发到 PC（PC 端 rp_ws.log 可见）
+    gCtrl = [[WsClient alloc] initWithURL:[NSURL URLWithString:
+             [NSString stringWithFormat:@"ws://%@:%d/", kHost, kControlPort]]];
+    YLogSetSink(^(NSString *line) {
+        NSDictionary *o = @{@"cmd": @"log", @"msg": line};
+        NSData *d = [NSJSONSerialization dataWithJSONObject:o options:0 error:nil];
+        [gCtrl sendText:[[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding]];
+    });
+    [gCtrl connect];
 
     YLog(@"app launched, target ws://%@:%d", kHost, kVideoPort);
     _capture = [Capture new];

@@ -73,11 +73,15 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
         } @catch (NSException *e) { }
     });
 
-    YLog(@"app launched, target ws://%@:%d", kHost, kVideoPort);
     _capture = [Capture new];
     _capture.delegate = self;
     [_capture start];
     _status.text = [NSString stringWithFormat:@"推流中 → ws://%@:%d", kHost, kVideoPort];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        YLog(@"app launched, video=%@:%d control=%@:%d",
+             kHost, kVideoPort, kHost, kControlPort);
+    });
 }
 
 - (void)captureDidOutput:(CMSampleBufferRef)sample {

@@ -1,5 +1,6 @@
 #import "Encoder.h"
 #import <VideoToolbox/VideoToolbox.h>
+#import "YLog.h"
 
 // 前置声明：C 里必须先声明后使用
 static void EncoderCallback(void *outputCallbackRefCon, void *sourceFrameRefCon,
@@ -31,10 +32,15 @@ static void EncoderCallback(void *outputCallbackRefCon, void *sourceFrameRefCon,
                                                  EncoderCallback,
                                                  (__bridge void *)self,
                                                  &_session);
-        if (st != noErr) {
-            NSLog(@"[YKCaster] VTCompressionSessionCreate failed: %d", (int)st);
+        if (st != noErr || !_session) {
+            YLog(@"VTCompressionSessionCreate FAILED status=%d size=%.0fx%.0f",
+                 (int)st, size.width, size.height);
+            _session = NULL;
+        } else {
+            VTSessionSetProperty(_session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
+            YLog(@"encoder ready %.0fx%.0f fps=%d bitrate=%d",
+                 size.width, size.height, _fps, bitrate);
         }
-        VTSessionSetProperty(_session, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue);
     }
     return self;
 }
@@ -51,7 +57,10 @@ static void EncoderCallback(void *outputCallbackRefCon, void *sourceFrameRefCon,
 static void EncoderCallback(void *outputCallbackRefCon, void *sourceFrameRefCon,
                             OSStatus status, VTEncodeInfoFlags infoFlags,
                             CMSampleBufferRef sampleBuffer) {
-    if (status != noErr || !sampleBuffer) return;
+    if (status != noErr || !sampleBuffer) {
+        YLog(@"encode cb status=%d buf=%p", (int)status, sampleBuffer);
+        return;
+    }
     Encoder *self = (__bridge Encoder *)outputCallbackRefCon;
     [self handleSampleBuffer:sampleBuffer];
 }
@@ -116,10 +125,11 @@ static void EncoderCallback(void *outputCallbackRefCon, void *sourceFrameRefCon,
 }
 
 - (void)encode:(CMSampleBufferRef)sample {
-    if (!_session || !sample) return;
+    if (!_session) { return; }
+    if (!sample) { YLog(@"encode: sample nil"); return; }
     // 关键：VideoToolbox 要的是 CVImageBufferRef，不是 CMSampleBufferRef
     CVImageBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sample);
-    if (!pixelBuffer) return;
+    if (!pixelBuffer) { YLog(@"encode: no pixelBuffer"); return; }
 
     CMTime pts = CMSampleBufferGetPresentationTimeStamp(sample);
     VTEncodeInfoFlags flags = 0;

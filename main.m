@@ -2,6 +2,7 @@
 #import "Capture.h"
 #import "Encoder.h"
 #import "WsClient.h"
+#import "YLog.h"
 
 static NSString *const kHost = @"192.168.1.42";   // PC 地址
 static const int kVideoPort = 10000;
@@ -45,7 +46,7 @@ static const int kVideoPort = 10000;
             weakSelf.encoder = nil;
             weakSelf.status.text = [NSString stringWithFormat:
                 @"推流中 %dfps %.1fMbps → %@", weakSelf.fps, weakSelf.bitrate / 1e6, kHost];
-            NSLog(@"[YKCaster] apply config fps=%d bitrate=%d", weakSelf.fps, weakSelf.bitrate);
+            YLog(@"apply config fps=%d bitrate=%d", weakSelf.fps, weakSelf.bitrate);
         } else if ([o[@"cmd"] isEqualToString:@"keyframe"]) {
             [weakSelf.encoder forceKeyframe];
         }
@@ -54,6 +55,7 @@ static const int kVideoPort = 10000;
     [_ws connect];
     [_ws sendText:@"{\"cmd\":\"hello\",\"role\":\"device\",\"codec\":\"h264\"}"];
 
+    YLog(@"app launched, target ws://%@:%d", kHost, kVideoPort);
     _capture = [Capture new];
     _capture.delegate = self;
     [_capture start];

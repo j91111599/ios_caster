@@ -5,7 +5,7 @@ include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = YKCaster
 
-YKCaster_FILES = main.m Capture.m Encoder.m WsClient.m
+YKCaster_FILES = main.m Capture.m Encoder.m WsClient.m YLog.m
 YKCaster_FRAMEWORKS = UIKit Foundation CoreMedia CoreVideo VideoToolbox ReplayKit QuartzCore
 YKCaster_CFLAGS = -fobjc-arc
 YKCaster_CODESIGN_FLAGS = -Sentitlements.plist

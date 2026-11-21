@@ -6,6 +6,7 @@
 @end
 
 @interface Encoder : NSObject
+- (void)handleSampleBuffer:(CMSampleBufferRef)buffer;
 @property (nonatomic, weak) id<EncoderDelegate> delegate;
 - (instancetype)initWithSize:(CGSize)size fps:(int)fps bitrate:(int)bitrate;
 - (void)encode:(CMSampleBufferRef)sample;

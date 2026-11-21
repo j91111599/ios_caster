@@ -23,6 +23,13 @@ jobs:
           echo "THEOS=$THEOS" >> "$GITHUB_ENV"
           echo "$THEOS/bin" >> "$GITHUB_PATH"
 
+      - name: Install ldid
+        run: |
+          set -e
+          brew install ldid || brew install ProcursusTeam/ldid/ldid || true
+          which ldid && ldid -v || echo "ldid not found, will try Theos bundled"
+          ls "$THEOS/bin" | head -20
+
       - name: Build package
         shell: bash
         run: |

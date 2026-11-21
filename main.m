@@ -61,12 +61,17 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
     // 控制通道：把设备日志实时发到 PC（PC 端 rp_ws.log 可见）
     gCtrl = [[WsClient alloc] initWithURL:[NSURL URLWithString:
              [NSString stringWithFormat:@"ws://%@:%d/", kHost, kControlPort]]];
+    [gCtrl connect];
     YLogSetSink(^(NSString *line) {
         NSDictionary *o = @{@"cmd": @"log", @"msg": line};
         NSData *d = [NSJSONSerialization dataWithJSONObject:o options:0 error:nil];
-        [gCtrl sendText:[[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding]];
+        @try {
+            @try {
+            NSString *json = [[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding];
+            [gCtrl sendText:json];
+        } @catch (NSException *e) { }
+        } @catch (NSException *e) { }
     });
-    [gCtrl connect];
 
     YLog(@"app launched, target ws://%@:%d", kHost, kVideoPort);
     _capture = [Capture new];

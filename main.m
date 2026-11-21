@@ -34,8 +34,14 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
     _status.text = @"准备中…";
     [self.view addSubview:_status];
 
-    _ws = [[WsClient alloc] initWithURL:[NSURL URLWithString:
-          [NSString stringWithFormat:@"ws://%@:%d/", kHost, kVideoPort]]];
+    YLog(@"viewDidLoad begin");
+    @try {
+        _ws = [[WsClient alloc] initWithURL:[NSURL URLWithString:
+              [NSString stringWithFormat:@"ws://%@:%d/", kHost, kVideoPort]]];
+        YLog(@"video client created");
+    } @catch (NSException *e) {
+        YLog(@"WS CREATE EXCEPTION: %@ | %@", e.name, e.reason);
+    }
 
     __weak typeof(self) weakSelf = self;
     _ws.onText = ^(NSString *text) {
@@ -55,13 +61,23 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
         }
     };
 
-    [_ws connect];
-    [_ws sendText:@"{\"cmd\":\"hello\",\"role\":\"device\",\"codec\":\"h264\"}"];
+    @try {
+        [_ws connect];
+        [_ws sendText:@"{\"cmd\":\"hello\",\"role\":\"device\",\"codec\":\"h264\"}"];
+        YLog(@"video connect issued");
+    } @catch (NSException *e) {
+        YLog(@"WS CONNECT EXCEPTION: %@ | %@", e.name, e.reason);
+    }
 
     // 控制通道：把设备日志实时发到 PC（PC 端 rp_ws.log 可见）
-    gCtrl = [[WsClient alloc] initWithURL:[NSURL URLWithString:
-             [NSString stringWithFormat:@"ws://%@:%d/", kHost, kControlPort]]];
-    [gCtrl connect];
+    @try {
+        gCtrl = [[WsClient alloc] initWithURL:[NSURL URLWithString:
+                 [NSString stringWithFormat:@"ws://%@:%d/", kHost, kControlPort]]];
+        [gCtrl connect];
+        YLog(@"control connect issued");
+    } @catch (NSException *e) {
+        YLog(@"CTRL EXCEPTION: %@ | %@", e.name, e.reason);
+    }
     YLogSetSink(^(NSString *line) {
         NSDictionary *o = @{@"cmd": @"log", @"msg": line};
         NSData *d = [NSJSONSerialization dataWithJSONObject:o options:0 error:nil];
@@ -73,9 +89,14 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
         } @catch (NSException *e) { }
     });
 
-    _capture = [Capture new];
-    _capture.delegate = self;
-    [_capture start];
+    @try {
+        _capture = [Capture new];
+        _capture.delegate = self;
+        [_capture start];
+        YLog(@"capture start issued");
+    } @catch (NSException *e) {
+        YLog(@"CAPTURE EXCEPTION: %@ | %@", e.name, e.reason);
+    }
     _status.text = [NSString stringWithFormat:@"推流中 → ws://%@:%d", kHost, kVideoPort];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
@@ -107,15 +128,22 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)app didFinishLaunchingWithOptions:(NSDictionary *)opts {
-    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    self.window.rootViewController = [RootVC new];
-    [self.window makeKeyAndVisible];
+    @try {
+        YLog(@"didFinishLaunching");
+        self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        self.window.rootViewController = [RootVC new];
+        [self.window makeKeyAndVisible];
+        YLog(@"window visible");
+    } @catch (NSException *e) {
+        YLog(@"LAUNCH EXCEPTION: %@ | %@", e.name, e.reason);
+    }
     return YES;
 }
 @end
 
 int main(int argc, char *argv[]) {
     @autoreleasepool {
+        YLog(@"=== boot === uid=%d home=%@", getuid(), NSHomeDirectory());
         return UIApplicationMain(argc, argv, nil, @"AppDelegate");
     }
 }

@@ -43,8 +43,13 @@
 }
 
 - (void)sendText:(NSString *)text {
-    [_task sendMessage:[[NSURLSessionWebSocketMessage alloc] initWithString:text]
-     completionHandler:nil];
+    NSURLSessionWebSocketMessage *msg =
+        [[NSURLSessionWebSocketMessage alloc] initWithString:text];
+    [_task sendMessage:msg completionHandler:^(NSError *error) {
+        if (error) {
+            NSLog(@"[YKCaster] ws sendText err %@", error);
+        }
+    }];
 }
 
 @end

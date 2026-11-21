@@ -1,0 +1,9 @@
+Package: com.ykclone.caster
+Name: YKCaster
+Version: 0.1.0
+Architecture: iphoneos-arm
+Description: 自研被控端：抓屏 + H.264 硬编 + WebSocket 推流
+Maintainer: local
+Author: local
+Section: Utilities
+Depends: firmware (>= 15.0), mobilesubstrate

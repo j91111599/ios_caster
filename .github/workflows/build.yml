@@ -1,0 +1,20 @@
+name: build-deb
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Theos
+        run: |
+          export THEOS=$RUNNER_TEMP/theos
+          git clone --recursive https://github.com/theos/theos.git $THEOS
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+      - name: Build (rootless deb)
+        run: |
+          export PATH=$THEOS/bin:$PATH
+          make THEOS_PACKAGE_SCHEME=rootless package FINALPACKAGE=1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ykcaster-deb
+          path: packages/*.deb

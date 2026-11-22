@@ -45,3 +45,14 @@ jobs:
           name: ykcaster-deb
           path: "**/*.deb"
           if-no-files-found: warn
+
+      - name: Publish deb to Release
+        if: always()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: build-${{ github.run_number }}
+          body: "自动构建产物：${{ github.sha }}"
+          files: "**/*.deb"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

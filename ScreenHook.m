@@ -91,6 +91,7 @@ static const int kControlPort = 10001;
         CVPixelBufferRef pb = [self currentPixelBuffer];
         if (!pb) return;
 
+        // 不管有没有收到 config，第一次拿到像素就建编码器（否则 PC 重连后不推流）
         if (!self.encoder) {
             size_t w = CVPixelBufferGetWidth(pb), h = CVPixelBufferGetHeight(pb);
             self.size = CGSizeMake(w, h);

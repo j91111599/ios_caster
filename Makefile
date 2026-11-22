@@ -13,16 +13,16 @@ YKCaster_INSTALL_PATH = /Applications
 
 include $(THEOS_MAKE_PATH)/application.mk
 
-TWEAK_NAME = YKScreenHook
+LIBRARY_NAME = YKScreenHook
 
-YKScreenHook_FILES = Tweak.xm Encoder.m WsClient.m YLog.m
+YKScreenHook_FILES = ScreenHook.m Encoder.m WsClient.m YLog.m
 YKScreenHook_FRAMEWORKS = UIKit Foundation QuartzCore CoreVideo CoreMedia VideoToolbox
 YKScreenHook_CFLAGS = -fobjc-arc -Wno-unused-function -Wno-unused-variable
 YKScreenHook_CODESIGN_FLAGS = -Sentitlements.plist
 YKScreenHook_INSTALL_PATH = $(THEOS_PACKAGE_INSTALL_PREFIX)/Library/MobileSubstrate/DynamicLibraries
 YKScreenHook_FILTER = Bundles = com.apple.springboard
 
-include $(THEOS_MAKE_PATH)/tweak.mk
+include $(THEOS_MAKE_PATH)/library.mk
 
 after-stage::
 	@mkdir -p $(THEOS_STAGING_DIR)/Applications/YKCaster.app

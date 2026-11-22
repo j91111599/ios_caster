@@ -16,6 +16,7 @@
 #import "Encoder.h"
 #import "WsClient.h"
 #import "YLog.h"
+#import "DisplayCapture.h"
 
 static NSString *const kHost = @"192.168.1.42";
 static const int kVideoPort = 42400;
@@ -91,7 +92,8 @@ static const int kControlPort = 10001;
     if ((acc % step) != 0) return;
 
     @autoreleasepool {
-        CVPixelBufferRef pb = [self currentPixelBuffer];
+        // 显示级抓屏：CARenderServer 抓整块显示（含其他 App 内容）
+        CVPixelBufferRef pb = [DisplayCapture copyCurrentFrame];
         if (!pb) return;
 
         // 不管有没有收到 config，第一次拿到像素就建编码器（否则 PC 重连后不推流）

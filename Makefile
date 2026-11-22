@@ -20,10 +20,13 @@ YKScreenHook_FRAMEWORKS = UIKit Foundation QuartzCore CoreVideo CoreMedia VideoT
 YKScreenHook_CFLAGS = -fobjc-arc -Wno-unused-function -Wno-unused-variable
 YKScreenHook_CODESIGN_FLAGS = -Sentitlements.plist
 YKScreenHook_INSTALL_PATH = $(THEOS_PACKAGE_INSTALL_PREFIX)/Library/MobileSubstrate/DynamicLibraries
-YKScreenHook_FILTER = Bundles = com.apple.springboard
 
 include $(THEOS_MAKE_PATH)/library.mk
 
+# App 的 Info.plist 与 dylib 的 Filter plist 都要手动放进 staging
 after-stage::
-	@mkdir -p $(THEOS_STAGING_DIR)/Applications/YKCaster.app
-	@cp $(THEOS_PROJECT_DIR)/YKCaster/Info.plist $(THEOS_STAGING_DIR)/Applications/YKCaster.app/Info.plist
+	@mkdir -p "$(THEOS_STAGING_DIR)/Applications/YKCaster.app"
+	@cp "$(THEOS_PROJECT_DIR)/YKCaster/Info.plist" "$(THEOS_STAGING_DIR)/Applications/YKCaster.app/Info.plist"
+	@mkdir -p "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries"
+	@cp "$(THEOS_PROJECT_DIR)/YKScreenHook.plist" "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries/YKScreenHook.plist"
+	@ls -l "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries/" || true

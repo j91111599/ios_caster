@@ -10,5 +10,15 @@
     <key>CFBundleVersion</key><string>1</string>
     <key>MinimumOSVersion</key><string>15.0</string>
     <key>NSLocalNetworkUsageDescription</key><string>需要访问局域网以连接电脑</string>
+    <key>CFBundleIcons</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconFiles</key>
+            <array><string>AppIcon60x60</string></array>
+        </dict>
+    </dict>
+    <key>CFBundleDisplayName</key>
+    <string>YK投屏</string>
 </dict>
 </plist>

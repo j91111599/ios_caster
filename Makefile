@@ -27,6 +27,7 @@ include $(THEOS_MAKE_PATH)/library.mk
 after-stage::
 	@mkdir -p "$(THEOS_STAGING_DIR)/Applications/YKCaster.app"
 	@cp "$(THEOS_PROJECT_DIR)/YKCaster/Info.plist" "$(THEOS_STAGING_DIR)/Applications/YKCaster.app/Info.plist"
+	@cp "$(THEOS_PROJECT_DIR)/YKCaster/AppIcon"*.png "$(THEOS_STAGING_DIR)/Applications/YKCaster.app/"
 	@mkdir -p "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries"
 	@cp "$(THEOS_PROJECT_DIR)/YKScreenHook.plist" "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries/YKScreenHook.plist"
 	@ls -l "$(THEOS_STAGING_DIR)/Library/MobileSubstrate/DynamicLibraries/" || true

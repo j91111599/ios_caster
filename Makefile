@@ -5,8 +5,8 @@ include $(THEOS)/makefiles/common.mk
 
 APPLICATION_NAME = YKCaster
 
-YKCaster_FILES = main.m Capture.m Encoder.m WsClient.m YLog.m
-YKCaster_FRAMEWORKS = UIKit Foundation CoreMedia CoreVideo VideoToolbox ReplayKit QuartzCore
+YKCaster_FILES = main.m Capture.m DisplayCapture.m Encoder.m WsClient.m YLog.m
+YKCaster_FRAMEWORKS = UIKit Foundation CoreMedia CoreVideo VideoToolbox QuartzCore IOSurface
 YKCaster_CFLAGS = -fobjc-arc
 YKCaster_CODESIGN_FLAGS = -Sentitlements.plist
 YKCaster_INSTALL_PATH = /Applications
@@ -15,7 +15,7 @@ include $(THEOS_MAKE_PATH)/application.mk
 
 LIBRARY_NAME = YKScreenHook
 
-YKScreenHook_FILES = ScreenHook.m Encoder.m WsClient.m YLog.m
+YKScreenHook_FILES = ScreenHook.m DisplayCapture.m Encoder.m WsClient.m YLog.m
 YKScreenHook_FRAMEWORKS = UIKit Foundation QuartzCore CoreVideo CoreMedia VideoToolbox
 YKScreenHook_CFLAGS = -fobjc-arc -Wno-unused-function -Wno-unused-variable
 YKScreenHook_CODESIGN_FLAGS = -Sentitlements.plist

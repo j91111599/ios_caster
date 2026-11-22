@@ -105,15 +105,14 @@ static WsClient *gCtrl = nil;   // 控制/日志通道
     });
 }
 
-- (void)captureDidOutput:(CMSampleBufferRef)sample {
-    CMFormatDescriptionRef fmt = CMSampleBufferGetFormatDescription(sample);
-    CMVideoDimensions dim = CMVideoFormatDescriptionGetDimensions(fmt);
-    if (!_encoder || dim.width != _videoSize.width || dim.height != _videoSize.height) {
-        _videoSize = CGSizeMake(dim.width, dim.height);
+- (void)capturePixelBuffer:(CVPixelBufferRef)pb pts:(CFTimeInterval)pts {
+    size_t w = CVPixelBufferGetWidth(pb), h = CVPixelBufferGetHeight(pb);
+    if (!_encoder || w != (size_t)_videoSize.width || h != (size_t)_videoSize.height) {
+        _videoSize = CGSizeMake(w, h);
         _encoder = [[Encoder alloc] initWithSize:_videoSize fps:_fps bitrate:_bitrate];
         _encoder.delegate = self;
     }
-    [_encoder encode:sample];
+    [_encoder encodePixelBuffer:pb pts:pts];
 }
 
 - (void)encoderDidOutputAnnexB:(NSData *)data keyframe:(BOOL)keyframe {

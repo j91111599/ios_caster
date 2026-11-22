@@ -1,34 +1,42 @@
 #import "Capture.h"
-#import <ReplayKit/ReplayKit.h>
+#import <QuartzCore/QuartzCore.h>
+#import "DisplayCapture.h"
 #import "YLog.h"
 
-@interface Capture () <RPScreenRecorderDelegate>
+@interface Capture ()
+@property (nonatomic, strong) CADisplayLink *link;
+@property (nonatomic, assign) int frameAcc;
+@property (nonatomic, assign) int targetFps;
 @end
 
 @implementation Capture
 
 - (void)start {
-    RPScreenRecorder *rec = [RPScreenRecorder sharedRecorder];
-    rec.delegate = self;
-    rec.microphoneEnabled = NO;
-    YLog(@"capture start requested, available=%d", (int)rec.isAvailable);
-    [rec startCaptureWithHandler:^(CMSampleBufferRef sample, RPSampleBufferType type, NSError *err) {
-        if (type == RPSampleBufferTypeVideo && sample) {
-            static int n = 0;
-            if (n < 3) { YLog(@"capture sample #%d", n + 1); n++; }
-            [self.delegate captureDidOutput:sample];
-        } else if (err) {
-            YLog(@"capture handler err: %@", err);
-        }
-    } completionHandler:^(NSError *err) {
-        YLog(@"capture start completion: %@", err ? err.description : @"ok");
-    }];
+    self.targetFps = 30;
+    self.frameAcc = 0;
+    YLog(@"display capture starting (CARenderServer)");
+    self.link = [CADisplayLink displayLinkWithTarget:self selector:@selector(tick:)];
+    [self.link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+}
+
+- (void)tick:(CADisplayLink *)link {
+    int step = MAX(1, (int)round(60.0 / (double)MAX(1, self.targetFps)));
+    self.frameAcc++;
+    if ((self.frameAcc % step) != 0) return;
+
+    @autoreleasepool {
+        CVPixelBufferRef pb = [DisplayCapture copyCurrentFrame];
+        if (!pb) return;
+        ++self.frameCount;
+        if (self.frameCount == 1) YLog(@"first display frame captured");
+        [self.delegate capturePixelBuffer:pb pts:link.timestamp];
+        CVPixelBufferRelease(pb);
+    }
 }
 
 - (void)stop {
-    [[RPScreenRecorder sharedRecorder] stopCaptureWithHandler:^(NSError *err) {
-        NSLog(@"[YKCaster] capture stop: %@", err ?: @"ok");
-    }];
+    [self.link invalidate];
+    self.link = nil;
 }
 
 @end

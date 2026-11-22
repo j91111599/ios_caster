@@ -94,6 +94,12 @@ static const int kControlPort = 10001;
     @autoreleasepool {
         // 显示级抓屏：CARenderServer 抓整块显示（含其他 App 内容）
         CVPixelBufferRef pb = [DisplayCapture copyCurrentFrame];
+        if (!pb) {
+            // 显示级抓屏被系统拒绝时，退回窗口合成（至少能看到桌面/SpringBoard 内容）
+            static int fbLogged = 0;
+            if (fbLogged < 3) { YLog(@"display capture failed, fallback to window composite"); fbLogged++; }
+            pb = [self currentPixelBuffer];
+        }
         if (!pb) return;
 
         // 不管有没有收到 config，第一次拿到像素就建编码器（否则 PC 重连后不推流）

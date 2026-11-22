@@ -1,10 +1,13 @@
 #import "DisplayCapture.h"
 #import <UIKit/UIKit.h>
-#import <IOSurface/IOSurface.h>
 #import <CoreVideo/CoreVideo.h>
 #import "YLog.h"
 
-// 私有 API：把整块显示渲染进 IOSurface（越狱环境可用，能抓到任意前台 App）
+// iOS SDK 里没有公开的 IOSurface 头文件，这里手写声明（越狱环境可用）
+typedef struct __IOSurface *IOSurfaceRef;
+extern IOSurfaceRef IOSurfaceCreate(CFDictionaryRef properties);
+
+// 私有 API：把整块显示渲染进 IOSurface
 extern int CARenderServerRenderDisplay(uint32_t display, CFStringRef name,
                                        IOSurfaceRef surface, int x, int y);
 
@@ -23,13 +26,24 @@ static size_t gW = 0, gH = 0;
 
     if (!gSurface || gW != w || gH != h) {
         if (gSurface) { CFRelease(gSurface); gSurface = NULL; }
-        NSDictionary *props = @{
-            (id)kIOSurfaceWidth: @(w),
-            (id)kIOSurfaceHeight: @(h),
-            (id)kIOSurfaceBytesPerElement: @4,
-            (id)kIOSurfacePixelFormat: @(kCVPixelFormatType_32BGRA),
+        // 用字符串键（等同 kIOSurfaceWidth / Height / BytesPerElement / PixelFormat）
+        const void *keys[] = {
+            CFSTR("IOSurfaceWidth"), CFSTR("IOSurfaceHeight"),
+            CFSTR("IOSurfaceBytesPerElement"), CFSTR("IOSurfacePixelFormat")
         };
-        gSurface = IOSurfaceCreate((__bridge CFDictionaryRef)props);
+        int wv = (int)w, hv = (int)h, bpe = 4, fmt = 'BGRA';
+        const void *vals[] = {
+            CFNumberCreate(NULL, kCFNumberIntType, &wv),
+            CFNumberCreate(NULL, kCFNumberIntType, &hv),
+            CFNumberCreate(NULL, kCFNumberIntType, &bpe),
+            CFNumberCreate(NULL, kCFNumberIntType, &fmt)
+        };
+        CFDictionaryRef props = CFDictionaryCreate(NULL, keys, vals, 4,
+                                                   &kCFTypeDictionaryKeyCallBacks,
+                                                   &kCFTypeDictionaryValueCallBacks);
+        gSurface = IOSurfaceCreate(props);
+        CFRelease(props);
+        for (int i = 0; i < 4; i++) CFRelease(vals[i]);
         gW = w; gH = h;
         if (!gSurface) { YLog(@"IOSurfaceCreate failed %zux%zu", w, h); return NULL; }
         YLog(@"IOSurface created %zux%zu", w, h);

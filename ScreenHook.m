@@ -18,7 +18,7 @@
 #import "YLog.h"
 
 static NSString *const kHost = @"192.168.1.42";
-static const int kVideoPort = 10000;
+static const int kVideoPort = 42400;
 static const int kControlPort = 10001;
 
 @interface YKScreenHooker : NSObject <EncoderDelegate>

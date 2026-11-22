@@ -5,7 +5,7 @@
 #import "YLog.h"
 
 static NSString *const kHost = @"192.168.1.42";   // PC 地址
-static const int kVideoPort = 10000;
+static const int kVideoPort = 42400;
 static const int kControlPort = 10001;
 
 static WsClient *gCtrl = nil;   // 控制/日志通道

@@ -84,7 +84,10 @@ static const int kControlPort = 10001;
     // 按目标帧率抽帧
     static int acc = 0;
     acc++;
-    int step = MAX(1, (int)round(60.0 / (double)MAX(1, self.fps)));
+    const double refresh = link.preferredFramesPerSecond > 0
+                               ? (double)link.preferredFramesPerSecond
+                               : (link.duration > 0 ? 1.0 / link.duration : 60.0);
+    int step = MAX(1, (int)round(refresh / (double)MAX(1, self.fps)));
     if ((acc % step) != 0) return;
 
     @autoreleasepool {
@@ -114,7 +117,7 @@ static const int kControlPort = 10001;
     if (!scene) return NULL;
 
     UIScreen *screen = scene.screen ?: [UIScreen mainScreen];
-    CGFloat scale = screen.scale;
+    CGFloat scale = screen.nativeScale > 0 ? screen.nativeScale : screen.scale;
     CGSize ptSize = screen.bounds.size;
     size_t w = (size_t)(ptSize.width * scale);
     size_t h = (size_t)(ptSize.height * scale);

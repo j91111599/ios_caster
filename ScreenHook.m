@@ -107,19 +107,17 @@ static const int kControlPort = 10001;
 }
 
 - (CVPixelBufferRef)currentPixelBuffer {
-    UIWindow *win = nil;
-    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-        if (![scene isKindOfClass:[UIWindowScene class]]) continue;
-        for (UIWindow *w in ((UIWindowScene *)scene).windows) {
-            if (w.isKeyWindow) { win = w; break; }
-        }
-        if (win) break;
+    UIWindowScene *scene = nil;
+    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
+        if ([s isKindOfClass:[UIWindowScene class]]) { scene = (UIWindowScene *)s; break; }
     }
-    if (!win) return NULL;
+    if (!scene) return NULL;
 
-    CGRect bounds = win.bounds;
-    size_t w = (size_t)(bounds.size.width * win.screen.scale);
-    size_t h = (size_t)(bounds.size.height * win.screen.scale);
+    UIScreen *screen = scene.screen ?: [UIScreen mainScreen];
+    CGFloat scale = screen.scale;
+    CGSize ptSize = screen.bounds.size;
+    size_t w = (size_t)(ptSize.width * scale);
+    size_t h = (size_t)(ptSize.height * scale);
     if (w == 0 || h == 0) return NULL;
 
     CVPixelBufferRef pb = NULL;
@@ -133,12 +131,32 @@ static const int kControlPort = 10001;
     CGContextRef ctx = CGBitmapContextCreate(CVPixelBufferGetBaseAddress(pb), w, h, 8,
                                              CVPixelBufferGetBytesPerRow(pb), cs,
                                              kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
-    if (ctx) {
-        UIGraphicsPushContext(ctx);
-        [win.layer renderInContext:ctx];
-        UIGraphicsPopContext();
-        CGContextRelease(ctx);
+    if (!ctx) {
+        CVPixelBufferUnlockBaseAddress(pb, 0);
+        CGColorSpaceRelease(cs);
+        CVPixelBufferRelease(pb);
+        return NULL;
     }
+
+    // CoreGraphics 原点在左下、CVPixelBuffer 原点在左上 → 整体翻转一次
+    CGContextScaleCTM(ctx, scale, -scale);
+    CGContextTranslateCTM(ctx, 0, -ptSize.height);
+
+    // 按 windowLevel 从低到高叠加所有窗口（壁纸 → 图标 → 状态栏）
+    NSArray<UIWindow *> *windows = [scene.windows sortedArrayUsingComparator:^NSComparisonResult(UIWindow *a, UIWindow *b) {
+        if (a.windowLevel < b.windowLevel) return NSOrderedAscending;
+        if (a.windowLevel > b.windowLevel) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+    for (UIWindow *win in windows) {
+        if (win.hidden || win.alpha <= 0.01) continue;
+        CGContextSaveGState(ctx);
+        CGContextTranslateCTM(ctx, win.frame.origin.x, win.frame.origin.y);
+        [win.layer renderInContext:ctx];
+        CGContextRestoreGState(ctx);
+    }
+
+    CGContextRelease(ctx);
     CGColorSpaceRelease(cs);
     CVPixelBufferUnlockBaseAddress(pb, 0);
     return pb;

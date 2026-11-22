@@ -10,5 +10,6 @@
 @property (nonatomic, weak) id<EncoderDelegate> delegate;
 - (instancetype)initWithSize:(CGSize)size fps:(int)fps bitrate:(int)bitrate;
 - (void)encode:(CMSampleBufferRef)sample;
+- (void)encodePixelBuffer:(CVImageBufferRef)pb pts:(CFTimeInterval)pts;
 - (void)forceKeyframe;
 @end

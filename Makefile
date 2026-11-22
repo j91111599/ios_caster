@@ -13,9 +13,17 @@ YKCaster_INSTALL_PATH = /Applications
 
 include $(THEOS_MAKE_PATH)/application.mk
 
-# 确保 Info.plist 进包（Theos 有时不会自动拷）
+TWEAK_NAME = YKScreenHook
+
+YKScreenHook_FILES = Tweak.xm Encoder.m WsClient.m YLog.m
+YKScreenHook_FRAMEWORKS = UIKit Foundation QuartzCore CoreVideo CoreMedia VideoToolbox
+YKScreenHook_CFLAGS = -fobjc-arc -Wno-unused-function -Wno-unused-variable
+YKScreenHook_CODESIGN_FLAGS = -Sentitlements.plist
+YKScreenHook_INSTALL_PATH = $(THEOS_PACKAGE_INSTALL_PREFIX)/Library/MobileSubstrate/DynamicLibraries
+YKScreenHook_FILTER = Bundles = com.apple.springboard
+
+include $(THEOS_MAKE_PATH)/tweak.mk
+
 after-stage::
-	@echo ">>> 注入 Info.plist"
 	@mkdir -p $(THEOS_STAGING_DIR)/Applications/YKCaster.app
 	@cp $(THEOS_PROJECT_DIR)/YKCaster/Info.plist $(THEOS_STAGING_DIR)/Applications/YKCaster.app/Info.plist
-	@ls -l $(THEOS_STAGING_DIR)/Applications/YKCaster.app/

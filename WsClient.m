@@ -34,7 +34,6 @@
 
 - (void)connect {
     @try {
-        NSError *err = nil;
         NSString *scheme = _url.scheme.lowercaseString;
         if (![scheme isEqualToString:@"ws"] && ![scheme isEqualToString:@"wss"]) {
             YLog(@"connect aborted: bad scheme %@", _url);

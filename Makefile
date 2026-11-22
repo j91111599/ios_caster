@@ -19,7 +19,7 @@ YKScreenHook_FILES = ScreenHook.m Encoder.m WsClient.m YLog.m
 YKScreenHook_FRAMEWORKS = UIKit Foundation QuartzCore CoreVideo CoreMedia VideoToolbox
 YKScreenHook_CFLAGS = -fobjc-arc -Wno-unused-function -Wno-unused-variable
 YKScreenHook_CODESIGN_FLAGS = -Sentitlements.plist
-YKScreenHook_INSTALL_PATH = $(THEOS_PACKAGE_INSTALL_PREFIX)/Library/MobileSubstrate/DynamicLibraries
+YKScreenHook_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries
 
 include $(THEOS_MAKE_PATH)/library.mk
 

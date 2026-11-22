@@ -142,13 +142,11 @@ static void EncoderCallback(void *outputCallbackRefCon, void *sourceFrameRefCon,
     // 旧 SDK 没有 kVTCompressionPropertyKey_ForceKeyFrame 常量，直接用字符串键
     VTSessionSetProperty(_session, CFSTR("ForceKeyFrame"), kCFBooleanTrue);
 }
-@end
-
-@implementation Encoder (PixelBuffer)
 - (void)encodePixelBuffer:(CVImageBufferRef)pb pts:(CFTimeInterval)pts {
     if (!_session || !pb) return;
     CMTime t = CMTimeMakeWithSeconds(pts, 600);
     VTEncodeInfoFlags flags = 0;
     VTCompressionSessionEncodeFrame(_session, pb, t, kCMTimeInvalid, NULL, NULL, &flags);
 }
+
 @end

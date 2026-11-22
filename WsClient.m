@@ -4,14 +4,15 @@
 @implementation WsClient {
     NSURLSession *_session;
     NSURLSessionWebSocketTask *_task;
-    NSMutableArray<id> *_pending;   // 任务没 resume 前先缓存
+    NSMutableArray<id> *_pending;
+    NSURL *_url;                 // 保存原始 ws:// URL（不要用 originalRequest.URL 重建）
 }
 
 - (instancetype)initWithURL:(NSURL *)url {
     if ((self = [super init])) {
+        _url = url;
         _session = [NSURLSession sessionWithConfiguration:
                     [NSURLSessionConfiguration defaultSessionConfiguration]];
-        _task = [_session webSocketTaskWithURL:url];
         _pending = [NSMutableArray array];
     }
     return self;
@@ -23,35 +24,51 @@
 
 - (void)flushPending {
     if (![self isReady]) return;
-    for (id item in _pending) {
-        @try {
-            [_task sendMessage:item completionHandler:^(NSError *e) { }];
-        } @catch (NSException *ex) { }
-    }
+    NSArray *items = [_pending copy];
     [_pending removeAllObjects];
+    for (id item in items) {
+        @try { [_task sendMessage:item completionHandler:^(NSError *e) { }]; }
+        @catch (NSException *ex) { }
+    }
 }
 
 - (void)connect {
-    _task = [_session webSocketTaskWithURL:_task.originalRequest.URL];
-    [_task resume];
-    [self receive];
-    NSLog(@"[YKC] ws connecting %@", _task.originalRequest.URL);
-    // resume 之后 flush（给一点时间进入 running）
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{ [self flushPending]; });
+    @try {
+        NSError *err = nil;
+        NSString *scheme = _url.scheme.lowercaseString;
+        if (![scheme isEqualToString:@"ws"] && ![scheme isEqualToString:@"wss"]) {
+            YLog(@"connect aborted: bad scheme %@", _url);
+            return;
+        }
+        _task = [_session webSocketTaskWithURL:_url];
+        if (!_task) {
+            YLog(@"connect failed: task nil for %@", _url);
+            return;
+        }
+        [_task resume];
+        [self receive];
+        YLog(@"ws connecting %@", _url.absoluteString);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{ [self flushPending]; });
+    } @catch (NSException *e) {
+        YLog(@"connect exception: %@ | %@", e.name, e.reason);
+    }
 }
 
 - (void)receive {
     __weak typeof(self) weakSelf = self;
     [_task receiveMessageWithCompletionHandler:^(NSURLSessionWebSocketMessage *msg, NSError *err) {
         if (err) {
-            NSLog(@"[YKC] ws recv err %@", err.localizedDescription);
+            YLog(@"ws recv err: %@", err.localizedDescription);
             [weakSelf scheduleReconnect];
             return;
         }
         if (msg.type == NSURLSessionWebSocketMessageTypeString) {
-            NSLog(@"[YKC] ws text: %@", msg.string);
+            YLog(@"ws text: %@", msg.string);
             if (weakSelf.onText) weakSelf.onText(msg.string);
+        } else {
+            YLog(@"ws binary recv %lu B (unexpected on this channel)",
+                 (unsigned long)msg.data.length);
         }
         [weakSelf receive];
     }];
@@ -66,25 +83,17 @@
 }
 
 - (void)sendData:(NSData *)data {
-    if (![self isReady]) {
-        [_pending addObject:[[NSURLSessionWebSocketMessage alloc] initWithData:data]];
-        return;
-    }
-    @try {
-        [_task sendMessage:[[NSURLSessionWebSocketMessage alloc] initWithData:data]
-         completionHandler:^(NSError *e) { }];
-    } @catch (NSException *ex) { }
+    NSURLSessionWebSocketMessage *m = [[NSURLSessionWebSocketMessage alloc] initWithData:data];
+    if (![self isReady]) { [_pending addObject:m]; return; }
+    @try { [_task sendMessage:m completionHandler:^(NSError *e) { }]; }
+    @catch (NSException *ex) { }
 }
 
 - (void)sendText:(NSString *)text {
-    if (![self isReady]) {
-        [_pending addObject:[[NSURLSessionWebSocketMessage alloc] initWithString:text]];
-        return;
-    }
-    @try {
-        [_task sendMessage:[[NSURLSessionWebSocketMessage alloc] initWithString:text]
-         completionHandler:^(NSError *e) { }];
-    } @catch (NSException *ex) { }
+    NSURLSessionWebSocketMessage *m = [[NSURLSessionWebSocketMessage alloc] initWithString:text];
+    if (![self isReady]) { [_pending addObject:m]; return; }
+    @try { [_task sendMessage:m completionHandler:^(NSError *e) { }]; }
+    @catch (NSException *ex) { }
 }
 
 @end
